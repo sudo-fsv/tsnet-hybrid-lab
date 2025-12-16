@@ -1,0 +1,56 @@
+// Topology for Terraform lab: two VPCs (server, client), peered
+// - server VPC: EKS cluster (hello app) + Tailscale operator
+// - client VPC: Ubuntu VM (Tailscale client) behind NAT + optional subnet router in public subnet
+
+digraph lab_topology {
+  rankdir=LR;
+  node [shape=box, style=rounded, fontsize=10];
+
+  Internet [shape=cloud, label="Internet"];
+
+  subgraph cluster_server_vpc {
+    label = "VPC: server (10.10.0.0/16)";
+    style = "dashed";
+
+    server_public [label="Public Subnets\n(IGW)", shape=component];
+    server_private [label="Private Subnets\n(EKS nodes)", shape=component];
+
+    eks_cluster [label="EKS Cluster\n(master control plane)", shape=oval];
+    eks_nodes [label="EKS Node Group\n(t3.small x2)", shape=box];
+    hello_app [label="hello Deployment\nClusterIP service", shape=note];
+    tailscale_operator [label="Tailscale Operator (Helm)", shape=note];
+
+    server_public -> server_private [style=invis];
+    server_private -> eks_nodes;
+    eks_nodes -> hello_app;
+    eks_cluster -> tailscale_operator;
+  }
+
+  subgraph cluster_client_vpc {
+    label = "VPC: client (10.20.0.0/16)";
+    style = "dashed";
+
+    client_public [label="Public Subnet\n(IGW + optional subnet router)", shape=component];
+    client_private [label="Private Subnet\n(NAT -> Internet)", shape=component];
+
+    nat_gw [label="NAT Gateway", shape=hexagon];
+    ubuntu_vm [label="Ubuntu VM (t3.small)\nTailscale client", shape=box];
+    tailscale_router [label="(Optional) Tailscale Subnet Router\nAdvertise routes", shape=box];
+
+    client_public -> nat_gw [label="NAT gateway used by private subnets", fontsize=9];
+    client_private -> nat_gw [style=dashed];
+    client_private -> ubuntu_vm;
+    client_public -> tailscale_router [style=dotted];
+  }
+
+  // VPC peering connection
+  server_private -> client_private [label="VPC Peering", color=blue, fontsize=9, penwidth=2];
+
+  // Internet connectivity
+  nat_gw -> Internet;
+  server_public -> Internet [style=dashed, label="IGW (if used)", fontsize=9];
+
+  // Logical relationships
+  tailscale_operator -> hello_app [label="manages Tailscale resources in-cluster", fontsize=9];
+  ubuntu_vm -> Internet [style=dotted, label="egress via NAT", fontsize=9];
+}
