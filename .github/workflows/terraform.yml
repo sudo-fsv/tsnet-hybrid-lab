@@ -1,0 +1,80 @@
+name: Terraform Manual Dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Terraform target subfolder (lab)'
+        required: true
+        default: 'lab'
+      operation:
+        description: 'Terraform operation: plan, apply, destroy'
+        required: true
+        default: 'plan'
+      aws_region:
+        description: 'AWS region (optional)'
+        required: false
+        default: 'us-east-1'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.7'
+
+      - name: Select directory
+        id: pickdir
+        run: echo "dir=terraform/${{ github.event.inputs.target }}" >> $GITHUB_OUTPUT
+
+      - name: Terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ github.event.inputs.aws_region }}
+          TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+        run: |
+          cd ${{ steps.pickdir.outputs.dir }}
+          terraform init -input=false
+
+      - name: Terraform plan
+        if: ${{ github.event.inputs.operation == 'plan' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ github.event.inputs.aws_region }}
+          TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+        run: |
+          cd ${{ steps.pickdir.outputs.dir }}
+          terraform plan -out=tfplan -input=false
+          terraform show -no-color tfplan
+
+      - name: Terraform apply
+        if: ${{ github.event.inputs.operation == 'apply' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ github.event.inputs.aws_region }}
+          TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+        run: |
+          cd ${{ steps.pickdir.outputs.dir }}
+          terraform apply -auto-approve
+
+      - name: Terraform destroy
+        if: ${{ github.event.inputs.operation == 'destroy' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ github.event.inputs.aws_region }}
+          TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+        run: |
+          cd ${{ steps.pickdir.outputs.dir }}
+          terraform destroy -auto-approve

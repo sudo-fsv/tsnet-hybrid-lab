@@ -10,21 +10,32 @@ provider "github" {
 resource "github_actions_secret" "aws_access_key" {
   repository  = var.repository
   secret_name = "AWS_ACCESS_KEY_ID"
-  plaintext   = var.aws_access_key_id
+  plaintext_value   = var.aws_access_key_id
 }
 
 resource "github_actions_secret" "aws_secret_key" {
   repository  = var.repository
   secret_name = "AWS_SECRET_ACCESS_KEY"
-  plaintext   = var.aws_secret_access_key
+  plaintext_value   = var.aws_secret_access_key
 }
 
 resource "github_actions_secret" "aws_session_token" {
   repository  = var.repository
   secret_name = "AWS_SESSION_TOKEN"
-  plaintext   = var.aws_session_token
+  plaintext_value   = var.aws_session_token
+}
+
+resource "github_actions_secret" "tailscale_auth_key" {
+  repository  = var.repository
+  secret_name = "TAILSCALE_AUTH_KEY"
+  plaintext_value   = var.tailscale_auth_key
 }
 
 output "secrets_written_to_repo" {
-  value = [github_actions_secret.aws_access_key.secret_name, github_actions_secret.aws_secret_key.secret_name, github_actions_secret.aws_session_token.secret_name]
+  value = [
+    github_actions_secret.aws_access_key.secret_name,
+    github_actions_secret.aws_secret_key.secret_name,
+    github_actions_secret.aws_session_token.secret_name,
+    github_actions_secret.tailscale_auth_key.secret_name,
+  ]
 }

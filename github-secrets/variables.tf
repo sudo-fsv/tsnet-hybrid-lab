@@ -9,7 +9,7 @@ variable "github_owner" {
   type        = string
 }
 
-variable "repository" {
+variable "github_repo" {
   description = "Repository name where to store the secrets"
   type        = string
 }
@@ -28,6 +28,13 @@ variable "aws_secret_access_key" {
 
 variable "aws_session_token" {
   description = "AWS session token (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "tailscale_auth_key" {
+  description = "Tailscale auth key for registering nodes"
   type        = string
   sensitive   = true
   default     = ""

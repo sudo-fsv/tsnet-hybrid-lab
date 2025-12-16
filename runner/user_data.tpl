@@ -41,7 +41,7 @@ if [ -z "$TOKEN" ] || [ -z "$OWNER" ] || [ -z "$REPO" ]; then
   exit 1
 fi
 
-sudo -u ec2-user bash -lc "./config.sh --unattended --url https://github.com/${OWNER}/${REPO} --token ${TOKEN} --name \"${NAME}\" --labels \"${LABELS}\""
+sudo -u ec2-user bash -lc "./config.sh --unattended --url https://github.com/${github_owner}/${github_repo} --token ${github_runner_token} --name \"${runner_name}\" --labels \"${runner_labels}\""
 
 cat >/etc/systemd/system/github-actions-runner.service <<'SERVICE'
 [Unit]
