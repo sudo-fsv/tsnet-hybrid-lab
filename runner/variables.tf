@@ -37,3 +37,10 @@ variable "runner_labels" {
   type        = list(string)
   default     = []
 }
+
+variable "github_token" {
+  description = "GitHub PAT used to request a runner registration token when `github_runner_token` is not provided"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

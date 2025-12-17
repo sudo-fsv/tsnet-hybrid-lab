@@ -4,13 +4,15 @@ set -e
 # Template variables provided by Terraform:
 #   ${github_owner}
 #   ${github_repo}
-#   ${github_runner_token}
+#   ${github_runner_token}    # optional pre-provisioned registration token
+#   ${github_token}           # optional PAT to request a registration token
 #   ${runner_name}
 #   ${runner_labels}
 
 OWNER="${github_owner}"
 REPO="${github_repo}"
 TOKEN="${github_runner_token}"
+GITHUB_TOKEN="${github_token}"
 NAME="${runner_name}"
 LABELS="${runner_labels}"
 
@@ -35,13 +37,31 @@ tar xzf actions-runner.tar.gz
 chown -R ec2-user:ec2-user "$WORKDIR"
 
 echo "Configuring runner"
-# Ensure token/URL are present; the script will exit if token is empty
-if [ -z "$TOKEN" ] || [ -z "$OWNER" ] || [ -z "$REPO" ]; then
-  echo "Missing required GitHub runner configuration (owner/repo/token)"
+
+# Validate owner/repo
+if [ -z "$OWNER" ] || [ -z "$REPO" ]; then
+  echo "Missing required GitHub runner configuration (owner/repo)"
   exit 1
 fi
 
-sudo -u ec2-user bash -lc "./config.sh --unattended --url https://github.com/${github_owner}/${github_repo} --token ${github_runner_token} --name \"${runner_name}\" --labels \"${runner_labels}\""
+# Obtain registration token if not provided
+if [ -z "$TOKEN" ]; then
+  if [ -z "$GITHUB_TOKEN" ]; then
+    echo "Missing GitHub PAT (github_token) to request a registration token"
+    exit 1
+  fi
+
+  echo "Requesting registration token from GitHub API"
+  API_URL="https://api.github.com/repos/$OWNER/$REPO/actions/runners/registration-token"
+  TOKEN_JSON=$(curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "$API_URL")
+  TOKEN=$(echo "$TOKEN_JSON" | jq -r .token)
+  if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+    echo "Failed to obtain registration token: $TOKEN_JSON"
+    exit 1
+  fi
+fi
+
+sudo -u ec2-user bash -lc "./config.sh --unattended --url https://github.com/$OWNER/$REPO --token $TOKEN --name \"$NAME\" --labels \"$LABELS\""
 
 cat >/etc/systemd/system/github-actions-runner.service <<'SERVICE'
 [Unit]
