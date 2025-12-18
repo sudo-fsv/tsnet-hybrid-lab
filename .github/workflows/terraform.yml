@@ -114,7 +114,7 @@ jobs:
           fi
           echo "Checking EKS cluster status for: $CLUSTER_NAME"
           aws eks describe-cluster --name "$CLUSTER_NAME" --region "${{ github.event.inputs.aws_region }}" --query 'cluster.status' --output text
-          aws eks update-kubeconfig --name $(terraform output -raw eks_cluster_name) --region $(terraform output -raw aws_region || echo us-west-2)
+          aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "${{ github.event.inputs.aws_region }}"
           kubectl get nodes
           kubectl get pods -A
 
