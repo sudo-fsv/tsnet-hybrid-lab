@@ -184,6 +184,7 @@ resource "kubernetes_namespace_v1" "tailscale" {
   metadata {
     name = "tailscale"
   }
+  depends_on = [module.eks]
 }
 
 resource "helm_release" "tailscale_operator" {
@@ -207,6 +208,7 @@ resource "helm_release" "tailscale_operator" {
       value = format("tailscale-operator-%s", module.eks.cluster_name)
     }
   ]
+  depends_on = [module.eks]
 }
 
 #########################################################
@@ -219,6 +221,7 @@ resource "kubernetes_deployment_v1" "hello" {
     namespace = "default"
     labels = { app = "hello" }
   }
+  depends_on = [module.eks]
 
   spec {
     replicas = 1
@@ -245,6 +248,7 @@ resource "kubernetes_service_v1" "hello" {
       "tailscale.com/expose" = "true"
     }
   }
+  depends_on = [module.eks]
 
   spec {
     selector = { app = kubernetes_deployment_v1.hello.metadata[0].labels.app }
