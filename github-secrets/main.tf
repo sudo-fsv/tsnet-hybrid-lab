@@ -30,3 +30,15 @@ resource "github_actions_secret" "tailscale_auth_key" {
   secret_name = "TAILSCALE_AUTH_KEY"
   plaintext_value   = var.tailscale_auth_key
 }
+
+resource "github_actions_secret" "tailscale_oauth_client_id" {
+  repository     = var.repository
+  secret_name    = "TAILSCALE_OAUTH_CLIENT_ID"
+  plaintext_value = var.tailscale_oauth_client_id
+}
+
+resource "github_actions_secret" "tailscale_oauth_client_secret" {
+  repository     = var.repository
+  secret_name    = "TAILSCALE_OAUTH_CLIENT_SECRET"
+  plaintext_value = var.tailscale_oauth_client_secret
+}

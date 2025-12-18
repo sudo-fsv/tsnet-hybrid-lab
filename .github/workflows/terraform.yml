@@ -51,6 +51,8 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ github.event.inputs.aws_region }}
           TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+              TF_VAR_tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+              TF_VAR_tailscale_oauth_client_secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
               # Initialize Terraform; if `tf_state_bucket` provided, configure S3 backend
@@ -73,6 +75,8 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ github.event.inputs.aws_region }}
           TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+          TF_VAR_tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          TF_VAR_tailscale_oauth_client_secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
           terraform plan -out=tfplan -input=false
@@ -86,6 +90,8 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ github.event.inputs.aws_region }}
           TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+          TF_VAR_tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          TF_VAR_tailscale_oauth_client_secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
           terraform apply -auto-approve
@@ -120,6 +126,8 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ github.event.inputs.aws_region }}
           TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+          TF_VAR_tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          TF_VAR_tailscale_oauth_client_secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
           terraform destroy -auto-approve

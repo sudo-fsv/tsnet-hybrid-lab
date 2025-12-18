@@ -39,3 +39,17 @@ variable "tailscale_auth_key" {
   sensitive   = true
   default     = ""
 }
+
+variable "tailscale_oauth_client_id" {
+  description = "Tailscale OAuth client id for operator/device integration"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "tailscale_oauth_client_secret" {
+  description = "Tailscale OAuth client secret for operator/device integration"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
