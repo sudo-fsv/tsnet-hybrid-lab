@@ -78,51 +78,8 @@ resource "aws_security_group" "ssh" {
   }
 }
 
-// CI/CD LAB pipeline will load user credentials with required permissions. 
-// Later we can change logic to AssumeRole and re-add a simpler instance profile logic for that.
-
-# # NOTE: The IAM role and policy below grant broad EC2 permissions (ec2:*) and
-# # are overly permissive. This is intended for lab or disposable environments
-# # where convenience is preferred over least-privilege. Do NOT use in production.
-
-# # IAM role assumed by the EC2 instance so the runner can manage EC2/VPC resources
-# resource "aws_iam_role" "runner_role" {
-#   name               = "gh-actions-runner-role"
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [{
-#       Action = "sts:AssumeRole"
-#       Effect = "Allow"
-#       Principal = {
-#         Service = "ec2.amazonaws.com"
-#       }
-#     }]
-#   })
-# }
-
-# # Inline policy granting EC2 (including VPC) full access. Overly permissive.
-# resource "aws_iam_role_policy" "runner_role_policy" {
-#   name = "gh-runner-ec2-vpc-full"
-#   role = aws_iam_role.runner_role.id
-
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Effect = "Allow"
-#         Action = "ec2:*"
-#         Resource = "*"
-#       }
-#     ]
-#   })
-# }
-
-# # Instance profile to attach to the EC2 instance
-# resource "aws_iam_instance_profile" "runner_profile" {
-#   name = "gh-actions-runner-profile"
-#   role = aws_iam_role.runner_role.name
-# }
-
+# CI/CD LAB pipeline will load user credentials with required permissions. 
+# This logic can be improved to AssumeRole via attached instance profile instead.
 resource "aws_instance" "runner" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t3.small"
@@ -139,8 +96,6 @@ resource "aws_instance" "runner" {
     runner_name         = var.runner_name
     runner_labels       = join(",", var.runner_labels)
   })
-
-  # iam_instance_profile = aws_iam_instance_profile.runner_profile.name
 
   tags = {
     Name = "github-actions-self-hosted-runner"
