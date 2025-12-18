@@ -109,12 +109,14 @@ AWS region: us-west-2
 2. Basic end-to-end connectivity between all peers via Tailscale
 
 ## WIP
-1. Validate test steps to identify NAT types (with without NAT gateway + relay) and possible solutions deployed via CI/CD
-2. Verify whether client-EKS server comms can prefer the VPC peering path instead of double-NAT + relay
-3. Evaluate the impact on latency while using subnet routers instead of relays
+1. End-to-end testing using subnet router
+2. Move Tailscale ACL configs to IaC
 
 ## Possible improvements
-1. Move all UI Tailscale settings to IaC
-2. Automate connectivity tests
-3. Add logging/monitoring with Grafana
+1. Validate steps to identify NAT types (with/without NAT gateway + relay)
+2. Verify whether client-EKS server comms can use the VPC peering path instead of double-NAT + relay
+3. Evaluate the impact on latency while using subnet routers instead of relays
+4. Move all UI Tailscale settings to IaC
+5. Automate connectivity tests
+6. Add logging/monitoring with Grafana
 
