@@ -21,7 +21,7 @@ echo "Starting runner user-data"
 
 # Update packages and install dependencies
 apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y jq git curl tar gzip unzip ca-certificates
+DEBIAN_FRONTEND=noninteractive apt-get install -y jq git curl tar gzip unzip ca-certificates awscli
 
 # Install Node.js 20 (required by some actions); use NodeSource installer
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
