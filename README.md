@@ -32,7 +32,7 @@ A slightly improved version (made by humans with draw.io):
 - `terraform/runner`: Terraform to launch an EC2 instance to serve as self-hosted GitActions runner. 
 - `terraform/github-secrets`: Terraform to create GitHub Actions repository secrets to store AWS and Tailscale credentials that will be safely consumed by the pipeline. This workspace implies a local Terraform apply.
 
-### Notes:
+### Notes and caveats:
 - Set credentials via environment variables or `terraform.tfvars` when running locally. For the GitHub secrets module you must provide a `github_token` with sufficient scope and `github_owner` + `repository` where the secrets will be stored.
 - The GitHub Actions workflow reads AWS credentials from repository secrets named `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` while the Tailscale credentials are passed as TF_vars.
 - The lab module `terraform/lab` creates two VPCs in Oregon (`us-west-2`) and VPC peering between them. The `server` VPC contains an EKS cluster (small nodes) with a simple "hello world" deployment and the Tailscale Operator. The `client` VPC contains a Linux VM with the Tailscale client installed and configured to use `TF_VAR_tailscale_auth_key`.
@@ -43,7 +43,6 @@ A slightly improved version (made by humans with draw.io):
     - Creates a Linux VM in a private subnet of the `client` VPC that connects to the internet via a NAT gateway and runs the Tailscale client.
     - Provides an optional Tailscale subnet-router instance in the `client` public subnet (toggle with `TF_VAR_tailscale_subnet_router_enable`). When enabled the router will advertise the `client` VPC private subnets to Tailscale using `TF_VAR_tailscale_auth_key`.
 
-### Notes and caveats:
 - The EKS module used depends on community modules (`terraform-aws-modules/eks/aws`) and the VPC module (`terraform-aws-modules/vpc/aws`). Run `terraform init` to fetch them. These are AWS supported modules that can simplify the code structure, but as modules themselves they are usually trying to do too much, too complex and are shipped with bugs.
 - Tailscale auth keys are sensitive: set `TF_VAR_tailscale_auth_key` in environment or a secure `terraform.tfvars` file.
 - This lab is intentionally permissive from an IAM perspective and directed at experimentation — review IAM and security-group settings before using in production.
@@ -71,7 +70,7 @@ terraform init
 terraform apply
 ```
 
-### Quick example to run Lab deployment by GitActions:
+### Quick example to run with GitActions:
 Reference: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow
 Please make sure to first upload the GitHub Secrets before proceeding.
 

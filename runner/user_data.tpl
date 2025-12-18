@@ -21,11 +21,25 @@ echo "Starting runner user-data"
 
 # Update packages and install dependencies
 apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y jq git curl tar gzip unzip ca-certificates awscli
+DEBIAN_FRONTEND=noninteractive apt-get install -y jq git curl tar gzip unzip ca-certificates
 
 # Install Node.js 20 (required by some actions); use NodeSource installer
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs
+
+# Install AWS CLI v2
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install --update
+rm -rf aws awscliv2.zip
+
+# Install kubectl (stable)
+KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+curl -LO "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
+curl -LO "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/amd64/kubectl.sha256"
+echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check - || exit 1
+install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+rm -f kubectl kubectl.sha256
 
 WORKDIR="/home/ubuntu/actions-runner"
 mkdir -p "$WORKDIR"
