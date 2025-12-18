@@ -18,7 +18,7 @@ on:
 
 jobs:
   terraform:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
@@ -66,6 +66,28 @@ jobs:
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
           terraform apply -auto-approve
+
+      - name: Verify EKS cluster
+        if: ${{ github.event.inputs.operation == 'apply' && github.event.inputs.target == 'lab' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ github.event.inputs.aws_region }}
+        run: |
+          cd ${{ steps.pickdir.outputs.dir }}
+          # try to read cluster name from terraform outputs (module sets output `eks_cluster_name`)
+          set -o pipefail
+          CLUSTER_NAME=$(terraform output -raw eks_cluster_name 2>/dev/null || true)
+          if [ -z "$CLUSTER_NAME" ]; then
+            echo "No eks_cluster_name output found; skipping EKS status check"
+            exit 0
+          fi
+          echo "Checking EKS cluster status for: $CLUSTER_NAME"
+          aws eks describe-cluster --name "$CLUSTER_NAME" --region "${{ github.event.inputs.aws_region }}" --query 'cluster.status' --output text
+          aws eks update-kubeconfig --name $(terraform output -raw eks_cluster_name) --region $(terraform output -raw aws_region || echo us-west-2)
+          kubectl get nodes
+          kubectl get pods -A
 
       - name: Terraform destroy
         if: ${{ github.event.inputs.operation == 'destroy' }}

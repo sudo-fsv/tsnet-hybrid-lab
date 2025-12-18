@@ -40,3 +40,17 @@ variable "enable_ssh_access" {
   type        = bool
   default     = true
 }
+
+variable "tailscale_oauth_client_id" {
+  description = "OAuth client ID for Tailscale (used by the operator)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "tailscale_oauth_client_secret" {
+  description = "OAuth client secret for Tailscale (used by the operator)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
