@@ -7,14 +7,27 @@ on:
         description: 'Terraform target subfolder (lab)'
         required: true
         default: 'lab'
+      tf_state_bucket:
+        description: 'S3 bucket for Terraform remote state (optional)'
+        required: false
+        default: ''
+      tf_state_dynamodb_table:
+        description: 'DynamoDB table for state locking (optional)'
+        required: false
+        default: ''
       operation:
         description: 'Terraform operation: plan, apply, destroy'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
         required: true
         default: 'plan'
       aws_region:
         description: 'AWS region (optional)'
         required: false
-        default: 'us-east-1'
+        default: 'us-west-2'
 
 jobs:
   terraform:
@@ -40,7 +53,17 @@ jobs:
           TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
-          terraform init -input=false
+              # Initialize Terraform; if `tf_state_bucket` provided, configure S3 backend
+              TF_STATE_BUCKET="${{ github.event.inputs.tf_state_bucket }}"
+              TF_STATE_DDB="${{ github.event.inputs.tf_state_dynamodb_table }}"
+              BACKEND_ARGS=""
+              if [ -n "$TF_STATE_BUCKET" ]; then
+                BACKEND_ARGS="-backend-config=bucket=$TF_STATE_BUCKET -backend-config=key=${{ steps.pickdir.outputs.dir }}/terraform.tfstate -backend-config=region=${{ github.event.inputs.aws_region }} -backend-config=encrypt=true"
+                if [ -n "$TF_STATE_DDB" ]; then
+                  BACKEND_ARGS="$BACKEND_ARGS -backend-config=dynamodb_table=$TF_STATE_DDB"
+                fi
+              fi
+              terraform init -input=false $BACKEND_ARGS
 
       - name: Terraform plan
         if: ${{ github.event.inputs.operation == 'plan' }}

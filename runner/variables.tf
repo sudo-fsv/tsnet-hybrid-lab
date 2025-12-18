@@ -44,3 +44,9 @@ variable "github_token" {
   sensitive   = true
   default     = ""
 }
+
+variable "enable_ssh_access" {
+  description = "Whether to allow SSH access to the runner instance (default: true)"
+  type        = bool
+  default     = false
+}

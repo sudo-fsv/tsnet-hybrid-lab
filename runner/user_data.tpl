@@ -20,12 +20,16 @@ exec > /var/log/user-data.log 2>&1
 echo "Starting runner user-data"
 
 # Update packages and install dependencies
-yum update -y
-yum install -y jq git curl tar gzip
+apt-get update -y
+DEBIAN_FRONTEND=noninteractive apt-get install -y jq git curl tar gzip unzip ca-certificates
 
-WORKDIR="/home/ec2-user/actions-runner"
+# Install Node.js 20 (required by some actions); use NodeSource installer
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs
+
+WORKDIR="/home/ubuntu/actions-runner"
 mkdir -p "$WORKDIR"
-chown ec2-user:ec2-user "$WORKDIR"
+chown ubuntu:ubuntu "$WORKDIR"
 
 cd "$WORKDIR"
 
@@ -34,7 +38,7 @@ LATEST_URL=$(curl -s https://api.github.com/repos/actions/runner/releases/latest
 echo "Download URL: $LATEST_URL"
 curl -o actions-runner.tar.gz -L "$LATEST_URL"
 tar xzf actions-runner.tar.gz
-chown -R ec2-user:ec2-user "$WORKDIR"
+chown -R ubuntu:ubuntu "$WORKDIR"
 
 echo "Configuring runner"
 
@@ -61,24 +65,24 @@ if [ -z "$TOKEN" ]; then
   fi
 fi
 
-sudo -u ec2-user bash -lc "./config.sh --unattended --url https://github.com/$OWNER/$REPO --token $TOKEN --name \"$NAME\" --labels \"$LABELS\""
+sudo -u ubuntu bash -lc "./config.sh --unattended --url https://github.com/$OWNER/$REPO --token $TOKEN --name \"$NAME\" --labels \"$LABELS\""
 
-cat >/etc/systemd/system/github-actions-runner.service <<'SERVICE'
+[ -n "$(command -v systemctl 2>/dev/null)" ] && cat >/etc/systemd/system/github-actions-runner.service <<'SERVICE'
 [Unit]
 Description=GitHub Actions Runner
 After=network.target
 
 [Service]
-User=ec2-user
-WorkingDirectory=/home/ec2-user/actions-runner
-ExecStart=/home/ec2-user/actions-runner/run.sh
+User=ubuntu
+WorkingDirectory=/home/ubuntu/actions-runner
+ExecStart=/home/ubuntu/actions-runner/run.sh
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 SERVICE
 
-systemctl daemon-reload
-systemctl enable --now github-actions-runner
+systemctl daemon-reload || true
+systemctl enable --now github-actions-runner || true
 
 echo "Runner setup complete"

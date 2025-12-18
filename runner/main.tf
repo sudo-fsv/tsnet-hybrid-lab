@@ -2,12 +2,12 @@ provider "aws" {
   region = var.aws_region
 }
 
-data "aws_ami" "amazon_linux" {
+data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["amazon"]
+  owners      = ["099720109477"] # Canonical
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
 }
 
@@ -67,7 +67,7 @@ resource "aws_security_group" "ssh" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.enable_ssh_access ? ["0.0.0.0/0"] : []
   }
 
   egress {
@@ -123,26 +123,26 @@ resource "aws_security_group" "ssh" {
 #   role = aws_iam_role.runner_role.name
 # }
 
-# resource "aws_instance" "runner" {
-#   ami                    = data.aws_ami.amazon_linux.id
-#   instance_type          = "t3.micro"
-#   vpc_security_group_ids = [aws_security_group.ssh.id]
-#   subnet_id              = aws_subnet.public.id
-#   associate_public_ip_address = true
-#   key_name               = var.key_name != "" ? var.key_name : null
+resource "aws_instance" "runner" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t3.small"
+  vpc_security_group_ids = [aws_security_group.ssh.id]
+  subnet_id              = aws_subnet.public.id
+  associate_public_ip_address = true
+  key_name               = var.key_name != "" ? var.key_name : null
 
-#   user_data = templatefile("${path.module}/user_data.tpl", {
-#     github_owner        = var.github_owner
-#     github_repo         = var.github_repo
-#     github_runner_token = var.github_runner_token
-#     github_token        = var.github_token
-#     runner_name         = var.runner_name
-#     runner_labels       = join(",", var.runner_labels)
-#   })
+  user_data = templatefile("${path.module}/user_data.tpl", {
+    github_owner        = var.github_owner
+    github_repo         = var.github_repo
+    github_runner_token = var.github_runner_token
+    github_token        = var.github_token
+    runner_name         = var.runner_name
+    runner_labels       = join(",", var.runner_labels)
+  })
 
-#   iam_instance_profile = aws_iam_instance_profile.runner_profile.name
+  # iam_instance_profile = aws_iam_instance_profile.runner_profile.name
 
-#   tags = {
-#     Name = "github-actions-self-hosted-runner"
-#   }
-# }
+  tags = {
+    Name = "github-actions-self-hosted-runner"
+  }
+}
