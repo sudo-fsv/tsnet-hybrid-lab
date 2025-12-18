@@ -17,6 +17,9 @@ apt-get install -y tailscale
 apt-get install -y iperf3
 
 
-tailscale up --authkey $TAILSCALE_KEY || true
+# Bring up tailscale and enable Tailscale SSH on this node.
+# Note: Tailscale SSH must also be enabled in your Tailscale admin settings for the
+# machine to accept SSH connections via the tailscale network.
+tailscale up --authkey "$TAILSCALE_KEY" --hostname "client-vm" --ssh || true
 
 echo "Tailscale setup finished"
