@@ -13,8 +13,8 @@ module "vpc_server" {
   public_subnets  = ["10.10.1.0/24", "10.10.2.0/24"]
   private_subnets = ["10.10.11.0/24", "10.10.12.0/24"]
 
-  enable_nat_gateway = true // lab_only to validate registration of nodes via NAT
-  single_nat_gateway = true // lab_only to validate registration of nodes via NAT
+  enable_nat_gateway = true
+  single_nat_gateway = false
   enable_vpn_gateway = false
 }
 
@@ -26,11 +26,11 @@ module "vpc_client" {
   cidr = "10.20.0.0/16"
   azs  = slice(data.aws_availability_zones.available.names, 0, 2)
 
-  public_subnets  = ["10.20.1.0/24", "10.20.2.0/24"]
-  private_subnets = ["10.20.11.0/24", "10.20.12.0/24"]
+  public_subnets  = ["10.20.1.0/24"]
+  private_subnets = []
 
-  enable_nat_gateway = true
-  single_nat_gateway = true
+  enable_nat_gateway = false
+  single_nat_gateway = false
   enable_vpn_gateway = false
 }
 
@@ -45,42 +45,10 @@ locals {
 }
 
 #########################################################
-# VPC peering
+# VPC peering removed: lab simplified to use Tailscale overlay
+# (previously there was a VPC peering connection and route from
+# server private -> client; these have been removed)
 #########################################################
-
-resource "aws_vpc_peering_connection" "peer" {
-  vpc_id        = module.vpc_server.vpc_id
-  peer_vpc_id   = module.vpc_client.vpc_id
-  peer_owner_id = data.aws_caller_identity.current.account_id
-  auto_accept   = true
-
-  tags = {
-    Name = "server-client-peering"
-  }
-}
-
-data "aws_caller_identity" "current" {}
-
-# Routes from server private -> client
-resource "aws_route" "server_to_client_private" {
-  route_table_id         = module.vpc_server.private_route_table_ids[0]
-  destination_cidr_block = module.vpc_client.vpc_cidr_block
-  vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
-}
-
-# Routes from client private -> server
-resource "aws_route" "client_to_server_private" {
-  route_table_id         = module.vpc_client.private_route_table_ids[0]
-  destination_cidr_block = module.vpc_server.vpc_cidr_block
-  vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
-}
-
-# Route from client private -> apply-machine public IP via IGW
-resource "aws_route" "client_to_apply_ip" {
-  route_table_id         = module.vpc_client.private_route_table_ids[0]
-  destination_cidr_block = format("%s/32", local.apply_public_ip)
-  gateway_id             = module.vpc_client.igw_id
-}
 
 #########################################################
 # EKS cluster in server VPC
@@ -184,7 +152,7 @@ resource "kubernetes_namespace_v1" "tailscale" {
   metadata {
     name = "tailscale"
   }
-  depends_on = [module.eks]
+  depends_on = [module.eks, aws_instance.tailscale_subnet_router]
 }
 
 resource "helm_release" "tailscale_operator" {
@@ -318,13 +286,44 @@ resource "aws_instance" "tailscale_subnet_router" {
 
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.client_instance_type
-  subnet_id              = module.vpc_client.public_subnets[0]
-  vpc_security_group_ids = [aws_security_group.client_sg.id]
+  subnet_id              = module.vpc_server.public_subnets[0]
+  vpc_security_group_ids = [aws_security_group.server_subnet_router_sg.id]
+  associate_public_ip_address = true
+  key_name                    = "ts-lab-keys"
+
 
   user_data = templatefile("${path.module}/tailscale_subnet_router_user_data.tpl", {
     tailscale_auth_key = var.tailscale_auth_key
-    advertise_cidrs    = join(",", module.vpc_client.private_subnets)
+    pod_cidr           = data.aws_eks_cluster.cluster.kubernetes_network_config[0].service_ipv4_cidr
   })
 
   tags = { Name = "tailscale-subnet-router" }
+}
+
+resource "aws_route" "return_to_subnet_router_pod_cidr" {
+  count = var.tailscale_subnet_router_enable ? 1 : 0
+
+  route_table_id         = module.vpc_server.private_route_table_ids[0]
+  destination_cidr_block = data.aws_eks_cluster.cluster.kubernetes_network_config[0].service_ipv4_cidr
+  network_interface_id   = aws_instance.tailscale_subnet_router[0].primary_network_interface_id
+}
+
+resource "aws_security_group" "server_subnet_router_sg" {
+  name        = "server-subnet-router-sg"
+  description = "Allow SSH and outbound internet for server subnet router"
+  vpc_id      = module.vpc_server.vpc_id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = var.enable_ssh_access ? [format("%s/32", local.apply_public_ip)] : []
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }

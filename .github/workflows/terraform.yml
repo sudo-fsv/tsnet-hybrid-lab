@@ -8,8 +8,8 @@ on:
         required: true
         default: 'lab'
       tf_state_bucket:
-        description: 'S3 bucket for Terraform remote state (optional)'
-        required: false
+        description: 'S3 bucket for Terraform remote state'
+        required: true
         default: ''
       tf_state_dynamodb_table:
         description: 'DynamoDB table for state locking (optional)'
@@ -25,8 +25,8 @@ on:
         required: true
         default: 'plan'
       aws_region:
-        description: 'AWS region (optional)'
-        required: false
+        description: 'AWS region'
+        required: true
         default: 'us-west-2'
 
 jobs:
@@ -53,6 +53,7 @@ jobs:
           TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
           TF_VAR_tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           TF_VAR_tailscale_oauth_client_secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          TF_VAR_tailscale_api_key: ${{ secrets.TAILSCALE_API_KEY }}
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
           # Initialize Terraform; if `tf_state_bucket` provided, configure S3 backend
@@ -77,6 +78,7 @@ jobs:
           TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
           TF_VAR_tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           TF_VAR_tailscale_oauth_client_secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          TF_VAR_tailscale_api_key: ${{ secrets.TAILSCALE_API_KEY }}
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
           terraform plan -out=tfplan -input=false
@@ -92,6 +94,7 @@ jobs:
           TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
           TF_VAR_tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           TF_VAR_tailscale_oauth_client_secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          TF_VAR_tailscale_api_key: ${{ secrets.TAILSCALE_API_KEY }}
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
           terraform apply -auto-approve
@@ -128,6 +131,7 @@ jobs:
           TF_VAR_tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
           TF_VAR_tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           TF_VAR_tailscale_oauth_client_secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          TF_VAR_tailscale_api_key: ${{ secrets.TAILSCALE_API_KEY }}
         run: |
           cd ${{ steps.pickdir.outputs.dir }}
           terraform destroy -auto-approve

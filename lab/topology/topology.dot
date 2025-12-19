@@ -1,6 +1,6 @@
 // Topology for Terraform lab: two VPCs (server, client), peered
-// - server VPC: EKS cluster (hello app) + Tailscale operator
-// - client VPC: Ubuntu VM (Tailscale client) behind NAT + optional subnet router in public subnet
+// Design updates: single public/private subnets, client VPC has only a public subnet (no NAT),
+// and the optional Tailscale subnet-router now lives in the server public subnet with a public IP.
 
 digraph lab_topology {
   rankdir=LR;
@@ -12,8 +12,8 @@ digraph lab_topology {
     label = "VPC: server (10.10.0.0/16)";
     style = "dashed";
 
-    server_public [label="Public Subnets\n(IGW)", shape=component];
-    server_private [label="Private Subnets\n(EKS nodes)", shape=component];
+    server_public [label="Public Subnet\n(IGW)\n(Subnet router)", shape=component];
+    server_private [label="Private Subnet\n(EKS nodes)", shape=component];
 
     eks_cluster [label="EKS Cluster\n(master control plane)", shape=oval];
     eks_nodes [label="EKS Node Group\n(t3.small x2)", shape=box];
@@ -29,26 +29,20 @@ digraph lab_topology {
   subgraph cluster_client_vpc {
     label = "VPC: client (10.20.0.0/16)";
     style = "dashed";
+    client_public [label="Public Subnet\n(IGW)", shape=component];
 
-    client_public [label="Public Subnet\n(IGW + optional subnet router)", shape=component];
-    client_private [label="Private Subnet\n(NAT -> Internet)", shape=component];
-
-    nat_gw [label="NAT Gateway", shape=hexagon];
     ubuntu_vm [label="Ubuntu VM (t3.small)\nTailscale client", shape=box];
-    tailscale_router [label="(Optional) Tailscale Subnet Router\nAdvertise routes", shape=box];
 
-    client_public -> nat_gw [label="NAT gateway used by private subnets", fontsize=9];
-    client_private -> nat_gw [style=dashed];
-    client_private -> ubuntu_vm;
-    client_public -> tailscale_router [style=dotted];
+    # client has no private subnets and no NAT gateway in the simplified design
+    client_public -> ubuntu_vm;
   }
 
-  // VPC peering connection
-  server_private -> client_private [label="VPC Peering", color=blue, fontsize=9, penwidth=2];
+  // VPC peering removed — connectivity via Tailscale overlay
+  // (no explicit VPC peering connection between server and client in this design)
 
   // Internet connectivity
-  nat_gw -> Internet;
-  server_public -> Internet [style=dashed, label="IGW (if used)", fontsize=9];
+  server_public -> Internet [style=dashed, label="IGW", fontsize=9];
+  client_public -> Internet [style=dashed, label="IGW", fontsize=9];
 
   // Logical relationships
   tailscale_operator -> hello_app [label="manages Tailscale resources in-cluster", fontsize=9];

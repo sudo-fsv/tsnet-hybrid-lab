@@ -42,3 +42,9 @@ resource "github_actions_secret" "tailscale_oauth_client_secret" {
   secret_name    = "TAILSCALE_OAUTH_CLIENT_SECRET"
   plaintext_value = var.tailscale_oauth_client_secret
 }
+
+resource "github_actions_secret" "tailscale_api_key" {
+  repository   = var.github_repo
+  secret_name  = "TAILSCALE_API_KEY"
+  plaintext_value = var.tailscale_api_key
+}

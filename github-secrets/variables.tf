@@ -53,3 +53,10 @@ variable "tailscale_oauth_client_secret" {
   sensitive   = true
   default     = ""
 }
+
+variable "tailscale_api_key" {
+  description = "Tailscale API key for the Tailscale Terraform provider"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

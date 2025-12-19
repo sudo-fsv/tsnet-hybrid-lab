@@ -32,13 +32,13 @@ variable "tailscale_auth_key" {
 variable "tailscale_subnet_router_enable" {
   description = "If true, create a subnet router instance in the public subnet that advertises routes"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "enable_ssh_access" {
   description = "Allow SSH from 0.0.0.0/0 to instances (for lab only)"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "tailscale_oauth_client_id" {
@@ -50,6 +50,13 @@ variable "tailscale_oauth_client_id" {
 
 variable "tailscale_oauth_client_secret" {
   description = "OAuth client secret for Tailscale (used by the operator)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "tailscale_api_key" {
+  description = "API key for the Tailscale Terraform provider (set via TF_VAR_tailscale_api_key or env var)"
   type        = string
   sensitive   = true
   default     = ""

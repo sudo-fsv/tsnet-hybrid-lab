@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/helm"
       version = ">= 2.0"
     }
+    tailscale = {
+      source  = "tailscale/tailscale"
+      version = ">= 0.6"
+    }
   }
 
   required_version = ">= 1.3.0"
@@ -19,6 +23,11 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
+}
+
+# Tailscale provider: API key may be passed via `var.tailscale_api_key` or env var `TAILSCALE_API_KEY`
+provider "tailscale" {
+  api_key = var.tailscale_api_key
 }
 
 provider "kubernetes" {
