@@ -175,7 +175,7 @@ resource "kubernetes_namespace_v1" "tailscale" {
   metadata {
     name = "tailscale"
   }
-  depends_on = [ module.eks, aws_instance.tailscale_subnet_route ]
+  depends_on = [ module.eks, aws_instance.tailscale_subnet_router ]
 }
 
 resource "helm_release" "tailscale_operator" {
