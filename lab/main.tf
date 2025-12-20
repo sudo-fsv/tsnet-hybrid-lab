@@ -152,6 +152,7 @@ data "aws_instances" "eks_nodes" {
     name   = "subnet-id"
     values = module.vpc_server.private_subnets
   }
+  depends_on = [module.eks]
 }
 
 # Lookup the first EC2 instance to extract its private IP
