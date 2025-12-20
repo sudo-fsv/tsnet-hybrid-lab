@@ -47,7 +47,6 @@ locals {
 resource "tailscale_acl" "lab_acl" {
   acl = jsonencode(local.tailscale_acl)
   overwrite_existing_content = true
-  reset_acl_on_destroy  = true
 }
 
 # Tag all Tailscale devices with custom tags for easier identification and access control.
@@ -60,6 +59,7 @@ data "tailscale_device" "aws-linux-vm" {
 resource "tailscale_device_tags" "aws-linux-vm" {
   device_id = data.tailscale_device.aws-linux-vm.node_id
   tags      = ["tag:aws-environment"]
+  depends_on = [ tailscale_acl.lab_acl ]
 }
 
 data "tailscale_device" "tailscale-subnet-router" {
@@ -71,5 +71,6 @@ data "tailscale_device" "tailscale-subnet-router" {
 resource "tailscale_device_tags" "tailscale-subnet-router" {
   device_id = data.tailscale_device.tailscale-subnet-router.node_id
   tags      = ["tag:aws-environment", "tag:k8s-subnet-router"]
+  depends_on = [ tailscale_acl.lab_acl ]
 }
 
