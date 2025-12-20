@@ -43,16 +43,6 @@ locals {
   }
 }
 
-# Optional: Terraform also supports an `import` block (Terraform 1.5+) which can
-# be included in configuration to declare an import to be performed during
-# apply. Uncomment and set the proper id if you prefer that method:
-data "tailscale_acl" "lab_acl" {}
-
-import {
-  to = tailscale_acl.lab_acl
-  id = data.tailscale_acl.lab_acl.id
-}
-
 # Note: the Tailscale Terraform provider applies ACLs as a single policy document.
 resource "tailscale_acl" "lab_acl" {
   acl = jsonencode(local.tailscale_acl)
