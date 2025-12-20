@@ -38,5 +38,6 @@ sudo sysctl -p /etc/sysctl.conf
 
 # Bring Tailscale up, enable SSH access over Tailscale, and advertise routes
 tailscale up --authkey "$TAILSCALE_KEY" --hostname "tailscale-subnet-router" --accept-routes --advertise-routes="$POD_ROUTES" --ssh || true
+tailscale set --tag="tag:aws-environment,tag:k8s-subnet-router"
 
 echo "Tailscale subnet router started, advertising: $POD_ROUTES"

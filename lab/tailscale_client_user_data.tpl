@@ -21,5 +21,6 @@ apt-get install -y iperf3
 # Note: Tailscale SSH must also be enabled in your Tailscale admin settings for the
 # machine to accept SSH connections via the tailscale network.
 tailscale up --authkey "$TAILSCALE_KEY" --hostname "aws-linux-vm" --accept-routes --ssh || true
+tailscale set --tag="tag:aws-environment"
 
 echo "Tailscale setup finished"
