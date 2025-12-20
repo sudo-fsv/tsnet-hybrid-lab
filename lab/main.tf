@@ -156,23 +156,14 @@ data "aws_instances" "eks_nodes" {
 
 # Lookup the first EC2 instance to extract its private IP
 data "aws_instance" "eks_node" {
-  count       = length(data.aws_instances.eks_nodes.ids) > 0 ? 1 : 0
-  instance_id = length(data.aws_instances.eks_nodes.ids) > 0 ? element(sort(data.aws_instances.eks_nodes.ids), 0) : ""
+  instance_id = element(sort(data.aws_instances.eks_nodes.ids), 0)
+  depends_on = [module.eks]
 }
 
 locals {
-  eks_node_ip = length(data.aws_instance.eks_node) > 0 ? data.aws_instance.eks_node[0].private_ip : ""
-  eks_node_ip_fqdn = length(data.aws_instance.eks_node) > 0 ? data.aws_instance.eks_node[0].private_dns : ""
-}
-
-# Map private subnet IDs to their CIDR blocks so we can advertise them via Tailscale
-data "aws_subnet" "eks_node_subnet" {
-  for_each = toset(module.vpc_server.private_subnets)
-  id       = each.key
-}
-
-locals {
-  pod_subnet_cidrs = [for sid in module.vpc_server.private_subnets : data.aws_subnet.eks_node_subnet[sid].cidr_block]
+  eks_node_ip = length(data.aws_instance.eks_node) > 0 ? data.aws_instance.eks_node.private_ip : ""
+  eks_node_ip_fqdn = length(data.aws_instance.eks_node) > 0 ? data.aws_instance.eks_node.private_dns : ""
+  pod_subnet_cidrs = module.vpc_server.private_subnets_cidr_blocks
 }
 
 #########################################################
