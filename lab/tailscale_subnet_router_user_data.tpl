@@ -3,10 +3,14 @@ set -e
 # exec > /var/log/tailscale-subnet-router-user-data.log 2>&1
 
 TAILSCALE_KEY="${tailscale_auth_key}"
-POD_CIDR="${pod_cidr}"
+# `pod_routes` is expected to be a comma-separated list of routes or CIDRs (e.g. 10.10.11.0/24,10.10.12.0/24)
+POD_ROUTES="${pod_routes}"
 
-if [ -z "$POD_CIDR" ]; then
-  echo "If a pod CIDR was provided, include it in the advertised routes"
+# Remove whitespace and ensure we have something to advertise
+POD_ROUTES="$(echo $POD_ROUTES | tr -d '[:space:]')"
+
+if [ -z "$POD_ROUTES" ]; then
+  echo "No pod routes provided; skipping subnet router setup"
   exit 0
 fi
 
@@ -33,6 +37,6 @@ echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.conf
 sudo sysctl -p /etc/sysctl.conf
 
 # Bring Tailscale up, enable SSH access over Tailscale, and advertise routes
-tailscale up --authkey $TAILSCALE_KEY --accept-routes --advertise-routes=$POD_CIDR --ssh || true
+tailscale up --authkey "$TAILSCALE_KEY" --hostname "tailscale-subnet-router" --accept-routes --advertise-routes="$POD_ROUTES" --ssh || true
 
-echo "Tailscale subnet router started, advertising: $POD_CIDR"
+echo "Tailscale subnet router started, advertising: $POD_ROUTES"

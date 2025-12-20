@@ -45,12 +45,6 @@ locals {
 }
 
 #########################################################
-# VPC peering removed: lab simplified to use Tailscale overlay
-# (previously there was a VPC peering connection and route from
-# server private -> client; these have been removed)
-#########################################################
-
-#########################################################
 # EKS cluster in server VPC
 #########################################################
 
@@ -144,6 +138,43 @@ data "aws_eks_cluster_auth" "cluster" {
   depends_on = [ module.eks ]
 }
 
+# Find EC2 instances that belong to the EKS cluster (nodes)
+data "aws_instances" "eks_nodes" {
+  filter {
+    name   = "tag:kubernetes.io/cluster/${module.eks.cluster_name}"
+    values = ["owned"]
+  }
+  filter {
+    name   = "instance-state-name"
+    values = ["running"]
+  }
+  filter {
+    name   = "subnet-id"
+    values = module.vpc_server.private_subnets
+  }
+}
+
+# Lookup the first EC2 instance to extract its private IP
+data "aws_instance" "eks_node" {
+  count       = length(data.aws_instances.eks_nodes.ids) > 0 ? 1 : 0
+  instance_id = length(data.aws_instances.eks_nodes.ids) > 0 ? element(sort(data.aws_instances.eks_nodes.ids), 0) : ""
+}
+
+locals {
+  eks_node_ip = length(data.aws_instance.eks_node) > 0 ? data.aws_instance.eks_node[0].private_ip : ""
+  eks_node_ip_fqdn = length(data.aws_instance.eks_node) > 0 ? data.aws_instance.eks_node[0].private_dns : ""
+}
+
+# Map private subnet IDs to their CIDR blocks so we can advertise them via Tailscale
+data "aws_subnet" "eks_node_subnet" {
+  for_each = toset(module.vpc_server.private_subnets)
+  id       = each.key
+}
+
+locals {
+  pod_subnet_cidrs = [for sid in module.vpc_server.private_subnets : data.aws_subnet.eks_node_subnet[sid].cidr_block]
+}
+
 #########################################################
 # Install Tailscale Operator via Helm (in cluster)
 #########################################################
@@ -173,7 +204,7 @@ resource "helm_release" "tailscale_operator" {
     },
     {
       name = "operatorConfig.hostname"
-      value = format("tailscale-operator-%s", module.eks.cluster_name)
+      value = "tailscale-operator-eks"
     }
   ]
   depends_on = [module.eks]
@@ -213,7 +244,8 @@ resource "kubernetes_service_v1" "hello" {
     name      = "hello-svc"
     namespace = "default"
     annotations = {
-      "tailscale.com/expose" = "true"
+      "tailscale.com/expose" = "true",
+      "tailscale.com/hostname" = "hello-ts-world"
     }
   }
   depends_on = [module.eks]
@@ -225,6 +257,25 @@ resource "kubernetes_service_v1" "hello" {
       target_port = 5678
     }
     type = "ClusterIP"
+  }
+}
+
+resource "kubernetes_service_v1" "hello_via_subnet_router" {
+  metadata {
+    name      = "hello-svc-subnet-router"
+    namespace = "default"
+  }
+  depends_on = [module.eks]
+
+  spec {
+    selector = { app = kubernetes_deployment_v1.hello.metadata[0].labels.app }
+    port {
+      name        = "http"
+      port        = 80
+      target_port = 5678
+      node_port    = 30080
+    }
+    type = "NodePort"
   }
 }
 
@@ -294,18 +345,10 @@ resource "aws_instance" "tailscale_subnet_router" {
 
   user_data = templatefile("${path.module}/tailscale_subnet_router_user_data.tpl", {
     tailscale_auth_key = var.tailscale_auth_key
-    pod_cidr           = data.aws_eks_cluster.cluster.kubernetes_network_config[0].service_ipv4_cidr
+    pod_routes = join(",", local.pod_subnet_cidrs)
   })
 
   tags = { Name = "tailscale-subnet-router" }
-}
-
-resource "aws_route" "return_to_subnet_router_pod_cidr" {
-  count = var.tailscale_subnet_router_enable ? 1 : 0
-
-  route_table_id         = module.vpc_server.private_route_table_ids[0]
-  destination_cidr_block = data.aws_eks_cluster.cluster.kubernetes_network_config[0].service_ipv4_cidr
-  network_interface_id   = aws_instance.tailscale_subnet_router[0].primary_network_interface_id
 }
 
 resource "aws_security_group" "server_subnet_router_sg" {

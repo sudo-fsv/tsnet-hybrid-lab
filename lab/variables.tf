@@ -61,3 +61,9 @@ variable "tailscale_api_key" {
   sensitive   = true
   default     = ""
 }
+
+variable "tsnet_domain" {
+  description = "Tailscale network domain to append to device hostnames (e.g. taild1234d.ts.net)"
+  type        = string
+  default     = ""
+}
