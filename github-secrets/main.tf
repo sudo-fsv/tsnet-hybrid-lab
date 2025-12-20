@@ -48,3 +48,9 @@ resource "github_actions_secret" "tailscale_api_key" {
   secret_name  = "TAILSCALE_API_KEY"
   plaintext_value = var.tailscale_api_key
 }
+
+resource "github_actions_secret" "tsnet_domain" {
+  repository   = var.github_repo
+  secret_name  = "TSNET_DOMAIN"
+  plaintext_value = var.tsnet_domain
+}
