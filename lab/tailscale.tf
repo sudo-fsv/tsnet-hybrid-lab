@@ -46,6 +46,8 @@ locals {
 # Note: the Tailscale Terraform provider applies ACLs as a single policy document.
 resource "tailscale_acl" "lab_acl" {
   acl = jsonencode(local.tailscale_acl)
+  overwrite_existing_content = true
+  reset_acl_on_destroy  = true
 }
 
 # Tag all Tailscale devices with custom tags for easier identification and access control.
