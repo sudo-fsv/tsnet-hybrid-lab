@@ -152,13 +152,13 @@ data "aws_instances" "eks_nodes" {
     name   = "subnet-id"
     values = module.vpc_server.private_subnets
   }
-  depends_on = [module.eks]
+  depends_on = [ module.eks ]
 }
 
 # Lookup the first EC2 instance to extract its private IP
 data "aws_instance" "eks_node" {
   instance_id = element(sort(data.aws_instances.eks_nodes.ids), 0)
-  depends_on = [module.eks]
+  depends_on = [ module.eks ]
 }
 
 locals {
@@ -175,7 +175,7 @@ resource "kubernetes_namespace_v1" "tailscale" {
   metadata {
     name = "tailscale"
   }
-  depends_on = [module.eks, aws_instance.tailscale_subnet_router]
+  depends_on = [ module.eks, aws_instance.tailscale_subnet_route ]
 }
 
 resource "helm_release" "tailscale_operator" {
@@ -199,7 +199,7 @@ resource "helm_release" "tailscale_operator" {
       value = "tailscale-operator-eks"
     }
   ]
-  depends_on = [module.eks]
+  depends_on = [ module.eks ]
 }
 
 #########################################################
@@ -212,7 +212,7 @@ resource "kubernetes_deployment_v1" "hello" {
     namespace = "default"
     labels = { app = "hello" }
   }
-  depends_on = [module.eks]
+  depends_on = [ module.eks ]
 
   spec {
     replicas = 1
@@ -240,7 +240,7 @@ resource "kubernetes_service_v1" "hello" {
       "tailscale.com/hostname" = "hello-ts-world"
     }
   }
-  depends_on = [module.eks]
+  depends_on = [ module.eks ]
 
   spec {
     selector = { app = kubernetes_deployment_v1.hello.metadata[0].labels.app }
@@ -257,7 +257,7 @@ resource "kubernetes_service_v1" "hello_via_subnet_router" {
     name      = "hello-svc-subnet-router"
     namespace = "default"
   }
-  depends_on = [module.eks, helm_release.tailscale_operator]
+  depends_on = [ module.eks, helm_release.tailscale_operator ]
 
   spec {
     selector = { app = kubernetes_deployment_v1.hello.metadata[0].labels.app }
@@ -318,6 +318,7 @@ resource "aws_instance" "client_vm" {
   })
 
   tags = { Name = "tailscale-client-vm" }
+  depends_on = [ module.vpc_client ]
 }
 
 #########################################################
@@ -341,6 +342,7 @@ resource "aws_instance" "tailscale_subnet_router" {
   })
 
   tags = { Name = "tailscale-subnet-router" }
+  depends_on = [ module.vpc_server ]
 }
 
 resource "aws_security_group" "server_subnet_router_sg" {
