@@ -362,3 +362,18 @@ resource "aws_security_group" "server_subnet_router_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+resource "aws_security_group_rule" "eks_allow_hello_nodeport_from_subnet_router" {
+  description       = "Allow access to hello service NodePort from subnet router"
+  type              = "ingress"
+  from_port         = "0"
+  to_port           = kubernetes_service_v1.hello_via_subnet_router.spec[0].port[0].node_port
+  protocol          = "tcp"
+  security_group_id = module.eks.node_security_group_id
+  cidr_blocks       = [module.vpc_server.public_subnets_cidr_blocks]
+
+  depends_on = [
+    kubernetes_service_v1.hello_via_subnet_router,
+    aws_instance.tailscale_subnet_router,
+  ]
+}
