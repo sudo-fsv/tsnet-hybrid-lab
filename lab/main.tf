@@ -257,7 +257,7 @@ resource "kubernetes_service_v1" "hello_via_subnet_router" {
     name      = "hello-svc-subnet-router"
     namespace = "default"
   }
-  depends_on = [module.eks]
+  depends_on = [module.eks, helm_release.tailscale_operator]
 
   spec {
     selector = { app = kubernetes_deployment_v1.hello.metadata[0].labels.app }
