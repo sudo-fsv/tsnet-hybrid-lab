@@ -366,7 +366,7 @@ resource "aws_security_group" "server_subnet_router_sg" {
 resource "aws_security_group_rule" "eks_allow_hello_nodeport_from_subnet_router" {
   description       = "Allow access to hello service NodePort from subnet router"
   type              = "ingress"
-  from_port         = "0"
+  from_port         = kubernetes_service_v1.hello_via_subnet_router.spec[0].port[0].node_port
   to_port           = kubernetes_service_v1.hello_via_subnet_router.spec[0].port[0].node_port
   protocol          = "tcp"
   security_group_id = module.eks.node_security_group_id
