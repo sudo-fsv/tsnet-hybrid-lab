@@ -370,7 +370,7 @@ resource "aws_security_group_rule" "eks_allow_hello_nodeport_from_subnet_router"
   to_port           = kubernetes_service_v1.hello_via_subnet_router.spec[0].port[0].node_port
   protocol          = "tcp"
   security_group_id = module.eks.node_security_group_id
-  cidr_blocks       = [module.vpc_server.public_subnets_cidr_blocks]
+  cidr_blocks       = module.vpc_server.public_subnets_cidr_blocks
 
   depends_on = [
     kubernetes_service_v1.hello_via_subnet_router,
