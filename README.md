@@ -38,7 +38,7 @@ A slightly improved version (made by humans with draw.io):
 - The runner EC2 will require admin permissions for AWS services: VPC, EC2, EKS, KMS, SSM, IAM, and CloudWatch Logs.
 
 
-### Quick local example (runner)
+### Quick example to build self-hosted runner
 ```bash
 cd terraform/runner
 terraform init
@@ -46,7 +46,7 @@ terraform plan
 terraform apply
 ```
 
-### Quick local example (github-secrets)
+### Quick example to upload secrets to GitHub
 ```bash
 cd terraform/github-secrets
 export TF_VAR_github_token="ghp_..."
