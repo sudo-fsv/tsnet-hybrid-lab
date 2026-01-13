@@ -37,7 +37,6 @@ echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.conf
 sudo sysctl -p /etc/sysctl.conf
 
 # Bring Tailscale up, enable SSH access over Tailscale, and advertise routes
-tailscale up --authkey "$TAILSCALE_KEY" --hostname "tailscale-subnet-router" --accept-routes --advertise-routes="$POD_ROUTES" --ssh || true
-tailscale set --tag="tag:aws-environment,tag:k8s-subnet-router"
+tailscale up --authkey "$TAILSCALE_KEY" --hostname "tailscale-subnet-router" --advertise-tags="tag:aws-environment,tag:k8s-subnet-router" --accept-routes --advertise-routes="$POD_ROUTES" --ssh || true
 
 echo "Tailscale subnet router started, advertising: $POD_ROUTES"
