@@ -240,7 +240,7 @@ resource "kubernetes_service_v1" "hello" {
       "tailscale.com/hostname" = "hello-ts-world"
     }
   }
-  depends_on = [ module.eks ]
+  depends_on = [ module.eks, helm_release.tailscale_operator ]
 
   spec {
     selector = { app = kubernetes_deployment_v1.hello.metadata[0].labels.app }
