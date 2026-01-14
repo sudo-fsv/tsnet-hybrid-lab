@@ -88,6 +88,7 @@ S3 bucket for Terraform remote state: bucket-name
 7. https://tailscale.com/kb/1406/quick-guide-subnets
 8. https://tailscale.com/kb/1438/kubernetes-operator-cluster-egress#access-an-ip-address-behind-a-subnet-router
 9. https://tailscale.com/kb/1214/site-to-site
+10. https://tailscale.com/kb/1296/aws-reference-architecture
 
 
 ## Connectivity tests and Results

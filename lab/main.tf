@@ -318,7 +318,7 @@ resource "aws_instance" "client_vm" {
   })
 
   tags = { Name = "tailscale-client-vm" }
-  depends_on = [ module.vpc_client ]
+  depends_on = [ module.vpc_client, tailscale_acl.lab_acl ]
 }
 
 #########################################################
@@ -342,7 +342,7 @@ resource "aws_instance" "tailscale_subnet_router" {
   })
 
   tags = { Name = "tailscale-subnet-router" }
-  depends_on = [ module.vpc_server ]
+  depends_on = [ module.vpc_server, tailscale_acl.lab_acl ]
 }
 
 resource "aws_security_group" "server_subnet_router_sg" {

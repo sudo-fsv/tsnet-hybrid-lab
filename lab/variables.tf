@@ -67,3 +67,10 @@ variable "tsnet_domain" {
   type        = string
   default     = ""
 }
+
+variable "tailscale_cleanup_target_names" {
+  description = "List of tag names or name substrings to match against Tailscale device tags/names for cleanup during destroy. If empty, cleanup is skipped."
+  type        = list(string)
+  sensitive   = false
+  default     = ["tailscale","aws-linux-vm"]
+}

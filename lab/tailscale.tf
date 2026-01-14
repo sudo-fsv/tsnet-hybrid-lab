@@ -34,7 +34,7 @@ locals {
     ]
 
 	"tagOwners": {
-		"tag:aws-environment":   ["autogroup:it-admin", "tag:k8s-operator"],
+		"tag:aws-environment":   ["autogroup:admin", "tag:k8s-operator"],
 		"tag:k8s-operator":      ["autogroup:admin", "tag:k8s-operator"],
     "tag:k8s-subnet-router": ["autogroup:admin", "tag:k8s-operator"],
 		"tag:k8s":               ["autogroup:admin", "tag:k8s-operator"],
